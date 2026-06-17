@@ -1,0 +1,11 @@
+# Decompiler / IL2CPP dump output (regenerate with tools/decompile.sh)
+.decomp/
+
+# Python venv for asset-extraction tooling
+.venv/
+__pycache__/
+*.pyc
+
+# Extracted assets (regenerate with tools/extract_*.py)
+ref/images/
+ref/audio/
