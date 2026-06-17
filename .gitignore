@@ -9,3 +9,9 @@ __pycache__/
 # Extracted assets (regenerate with tools/extract_*.py)
 ref/images/
 ref/audio/
+
+# C# build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
