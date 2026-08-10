@@ -17,3 +17,6 @@ obj/
 [Oo]bj/
 lib/
 *.csproj.user
+
+# Extracted game art, kept for reference while picking icons
+ref/icon-candidates/

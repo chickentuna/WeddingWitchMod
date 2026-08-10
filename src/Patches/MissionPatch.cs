@@ -2,32 +2,27 @@ using HarmonyLib;
 
 namespace WeddingWitchArchipelago;
 
-/// The run's two kinds of check.
+/// Beating the last boss.
 ///
-/// Both hooks sit on iterator methods, which is deliberate: Harmony patches the stub
+/// Clearing an ordinary stage is not a check in itself — the potion screen it leads to
+/// is, so a cleared stage already pays out once and counting the clear as well would
+/// double every run. The boss is the exception: it offers no potion.
+///
+/// The hook sits on an iterator method, which is deliberate: Harmony patches the stub
 /// that builds the state machine, so the postfix runs at `StartCoroutine(...)` — the
 /// moment the mission is judged complete, before the three seconds of treasure and
 /// fanfare.
 [HarmonyPatch]
 public static class MissionPatch
 {
-    /// RoadMapCanvas.ExecuteNode increments currentFloor as the stage begins, so by
-    /// the time it completes the counter already reads the 1-based stage just
-    /// cleared. It stops at the floor count, which is where the boss node sits.
-    [HarmonyPatch(typeof(MissionManager), nameof(MissionManager.MissionComplete))]
-    [HarmonyPostfix]
-    public static void OnStageCleared() =>
-        ApState.SendCheck(Locations.Stage(BattleUIManager.difficulty,
-                                          RoadMapCanvas.currentFloor));
-
-    /// The last boss is down, which is a check for the form the witch finished in.
-    /// Winning as the untransformed witch is a legitimate way to end a run and
-    /// simply carries no location.
+    /// The last boss is down. On Nightmare that is a check for the form the witch finished
+    /// in, and winning untransformed carries no location; on the other difficulties any form
+    /// counts, because their runs rarely offer enough of one potion type to transform at all.
     [HarmonyPatch(typeof(MissionManager), nameof(MissionManager.AdventureComplete))]
     [HarmonyPostfix]
     public static void OnBossCleared() =>
-        ApState.SendCheck(Locations.Boss(BattleUIManager.difficulty,
-                                         PotionManager.bodyState));
+        ApState.SendCheck(Locations.BossFor(BattleUIManager.difficulty,
+                                            PotionManager.bodyState));
 }
 
 /// The potion offered at the end of a stage.

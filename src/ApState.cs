@@ -26,6 +26,7 @@ public static class ApState
 
         Checked.Clear();
         DifficultiesGranted = 0;
+        goldReceived = 0;
         if (alreadyChecked != null)
             foreach (var location in alreadyChecked) Checked.Add(location);
 
@@ -54,7 +55,14 @@ public static class ApState
     /// which is also when a permanent upgrade would normally start mattering.
     public static void ReceiveItem(string itemName)
     {
-        if (itemName == ApItems.Filler) return;
+        if (ApItems.IsFiller(itemName)) return;
+
+        if (itemName == ApItems.Gold)
+        {
+            goldReceived++;
+            BankGold();
+            return;
+        }
 
         if (itemName == ApItems.ProgressiveDifficulty)
         {
@@ -84,6 +92,39 @@ public static class ApState
         ApProfile.Set(ApProfile.GameDataFile, upgrade.LoadKey, level.ToString());
         Plugin.Logger.LogInfo($"[ap] {upgrade.Display} is now level {level}/{upgrade.MaxLevel}");
         RequestReload();
+    }
+
+    /// Coins waiting to be paid in, because the item stream arrives on a network thread
+    /// and Coin.UpdateCoin is not safe to call from one. Plugin.Update drains it.
+    private static int pendingCoins;
+    private static int goldReceived;
+
+    /// Gold is additive, so unlike a level it cannot simply be recomputed from the item
+    /// stream — and the server replays that stream in full on every connect. The count
+    /// already paid in is kept with the room, so a reconnect banks the difference rather
+    /// than the lot again.
+    private static void BankGold()
+    {
+        var applied = 0;
+        if (ApProfile.TryGet(ApProfile.ModFile, GoldAppliedKey, out var stored))
+            int.TryParse(stored, out applied);
+
+        if (goldReceived <= applied) return;
+
+        pendingCoins += (goldReceived - applied) * ApItems.GoldPerItem;
+        ApProfile.Set(ApProfile.ModFile, GoldAppliedKey, goldReceived.ToString());
+        Plugin.Logger.LogInfo(
+            $"[ap] gold #{goldReceived} — {pendingCoins} coins queued for the next frame");
+    }
+
+    private const string GoldAppliedKey = "GoldApplied";
+
+    public static bool TakePendingCoins(out int amount)
+    {
+        amount = pendingCoins;
+        if (amount == 0) return false;
+        pendingCoins = 0;
+        return true;
     }
 
     /// How many difficulties past Normal the multiworld has opened. Rebuilt from the

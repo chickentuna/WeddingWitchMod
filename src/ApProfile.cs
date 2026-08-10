@@ -21,6 +21,10 @@ public static class ApProfile
 {
     public const string GameDataFile = "GameData.es3";
 
+    /// The mod's own bookkeeping, kept in the same per-room store. Not a real ES3 file,
+    /// so the interception in SaveDataPatch never sees it.
+    public const string ModFile = "mod";
+
     private static readonly Dictionary<string, string> Values =
         new Dictionary<string, string>();
 

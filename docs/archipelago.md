@@ -37,14 +37,25 @@ Levels deliberately take effect from the next run: `GlobalStat.ApplyUpgrade` acc
 instance fields that only reset when the scene reloads, so calling it again mid-run applies
 everything twice.
 
-## Locations — 90 of them
+## Locations — 82 by default
 | Source | Hook | Count |
 |---|---|---|
-| Stage cleared | `MissionManager.MissionComplete`, stage = `RoadMapCanvas.currentFloor` | 18 |
-| Potion drunk | `PotionManager.EatPotion1/2/3` | 54 |
-| Boss cleared in a form | `MissionManager.AdventureComplete`, form = `PotionManager.bodyState` | 18 |
+| Potion drunk | `PotionManager.EatPotion1/2/3`, stage = `RoadMapCanvas.currentFloor` | 54, or 18 |
+| Boss cleared | `MissionManager.AdventureComplete`, form = `PotionManager.bodyState` | 8 |
+| Shelf bought | `UpgradeItem.OnClick` on a cloned row | `shop_locations`, 20 by default |
 
-Both mission hooks sit on iterator methods on purpose: Harmony patches the stub that builds the
+Filler arrives as `Gift: <something>`. The mod matches that prefix rather than carrying
+the apworld's list of them — it does nothing with a gift but recognise it, so duplicating
+three dozen names would only be one more thing to drift. See `ApItems.IsFiller`.
+
+Clearing an ordinary stage is not a check: the potion screen it leads to is, so the clear would
+double every run. The boss is the exception, since it offers no potion.
+
+Only Nightmare's boss is split by form — `Locations.PerFormBoss`, matching `PER_FORM_BOSS` in the
+apworld. The shorter runs rarely offer enough of one potion type to transform, so asking for six
+forms there would ask for something the run does not reliably allow.
+
+The boss hook sits on an iterator method on purpose: Harmony patches the stub that builds the
 state machine, so the postfix fires at `StartCoroutine(...)` — the moment the mission is judged
 complete, ahead of the treasure and the fanfare.
 

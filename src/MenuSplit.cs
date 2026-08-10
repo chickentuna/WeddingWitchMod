@@ -30,38 +30,64 @@ public static class MenuSplit
 
     /// Off unless a session is live: with no shelves to sell, a second button would
     /// open an empty panel.
-    public static void Install(MonoBehaviour host) => host.StartCoroutine(InstallWhenReady(host));
+    ///
+    /// Safe to call repeatedly, and it needs to be: the scene can load before the
+    /// connection or after it, and whichever comes second is what makes the buttons
+    /// appear. Doing it only on scene load left a late connection with a vanilla menu
+    /// and no way back short of relaunching.
+    public static void Install(MonoBehaviour host)
+    {
+        if (host != null) host.StartCoroutine(InstallWhenReady());
+    }
 
-    private static IEnumerator InstallWhenReady(MonoBehaviour host)
+    /// The immediate attempt, for when the connection is what arrived second and the menu
+    /// is already sitting there built.
+    public static void InstallNow()
+    {
+        if (!ApState.Connected || Installed) return;
+        TryInstall();
+    }
+
+    private static bool Installed;
+
+    private static IEnumerator InstallWhenReady()
     {
         // The menu builds over the first frames of the scene, and the panel it points
         // at starts inactive, so nothing is findable immediately.
         yield return null;
         yield return new WaitForSeconds(1f);
 
-        if (!ApState.Connected) yield break;
+        if (!ApState.Connected || Installed) yield break;
+        TryInstall();
+    }
+
+    private static void TryInstall()
+    {
 
         var panel = FindPanel();
-        if (panel == null)
-        {
-            Plugin.Logger.LogWarning("[menu] no UpgradeWitchCanvas in the scene");
-            yield break;
-        }
+        if (panel == null) return;
 
         var upgrades = FindOpener(panel.gameObject);
         if (upgrades == null)
         {
             Plugin.Logger.LogWarning(
                 "[menu] no button opens the upgrade panel — leaving the menu alone");
-            yield break;
+            return;
         }
 
         if (upgrades.transform.parent != null
             && upgrades.transform.parent.Find(ShopButtonName) != null)
-            yield break;
+        {
+            Installed = true;
+            return;
+        }
 
         Clone(upgrades);
+        Installed = true;
     }
+
+    /// The buttons live and die with the scene, so a reload has to build them again.
+    public static void Forget() => Installed = false;
 
     /// The panel is inactive in the menu, so its static instance is still null and
     /// only the all-objects lookup finds it.
@@ -111,19 +137,20 @@ public static class MenuSplit
         shop.name = ShopButtonName;
         shop.transform.SetSiblingIndex(upgrades.transform.GetSiblingIndex() + 1);
 
-        // The Shop keeps the money bag it was cloned with — it is where coins go. The
-        // Upgrades button becomes the Archipelago one, since what it lists is what the
-        // multiworld has sent. White rather than colour: the menu art is flat and dark.
+        // Shop wears the Archipelago logo, because Archipelago is what it now sells;
+        // Upgrades wears an inventory icon, because it lists what you already hold. White
+        // rather than colour on the logo: the menu art is flat and dark.
         //
         // Only the clone is relabelled. The original's label is already the right word
         // and already localized; rewriting it would mean tearing out its localization.
+        var shopButton = shop.GetComponent<Button>();
         Relabel(shop, "Shop");
-        Reicon(upgrades, ApSprite.GetWhite());
+        Reicon(shopButton, ApSprite.GetWhite());
+        Reicon(upgrades, ApSprite.GetInventory());
 
         // The in-scene SetActive(true) is a persistent listener and so runs before
         // anything added here — which is fine, because the mode is applied again after
         // it. Both buttons get one, so whichever was pressed last decides the filter.
-        var shopButton = shop.GetComponent<Button>();
         if (shopButton != null) shopButton.onClick.AddListener(() => Show(Panel.Shop));
         upgrades.onClick.AddListener(() => Show(Panel.Upgrades));
 
@@ -151,7 +178,7 @@ public static class MenuSplit
     /// The Button's own graphic is its background; the icon is a separate child Image.
     private static void Reicon(Button button, Sprite sprite)
     {
-        if (sprite == null) return;
+        if (button == null || sprite == null) return;
 
         foreach (var image in button.GetComponentsInChildren<Image>(true))
         {
@@ -160,6 +187,9 @@ public static class MenuSplit
                 $"[menu] icon '{image.name}' was '{(image.sprite != null ? image.sprite.name : "none")}'");
             image.sprite = sprite;
             image.color = Color.white;
+            // The replacements are not all the shape of the art they stand in for, and the
+            // icon rect belongs to the menu's layout rather than to us.
+            image.preserveAspect = true;
             return;
         }
 

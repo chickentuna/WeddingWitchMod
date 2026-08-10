@@ -17,11 +17,16 @@ public static class ScoutCache
         public readonly string Receiver;
         public readonly ItemFlags Flags;
 
-        public Entry(string itemName, string receiver, ItemFlags flags)
+        /// Whether the item is bound for this slot. A shelf holding one of our own
+        /// upgrades can show that upgrade's icon instead of the Archipelago logo.
+        public readonly bool IsLocal;
+
+        public Entry(string itemName, string receiver, ItemFlags flags, bool isLocal)
         {
             ItemName = itemName;
             Receiver = receiver;
             Flags = flags;
+            IsLocal = isLocal;
         }
 
         /// The classification, in the words the Archipelago client uses for it.
@@ -47,9 +52,11 @@ public static class ScoutCache
     }
 
     /// Written from the scout's continuation, read while the potion screen builds.
-    public static void Add(string location, string itemName, string receiver, ItemFlags flags)
+    public static void Add(string location, string itemName, string receiver,
+                           ItemFlags flags, bool isLocal)
     {
-        lock (ByLocation) ByLocation[location] = new Entry(itemName, receiver, flags);
+        lock (ByLocation)
+            ByLocation[location] = new Entry(itemName, receiver, flags, isLocal);
     }
 
     public static bool TryGet(string location, out Entry entry)

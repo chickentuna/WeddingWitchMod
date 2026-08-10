@@ -45,13 +45,6 @@ public static class Locations
     /// slots, and the possible list is never short of three.
     public const int PotionSlots = 3;
 
-    public static string Stage(Difficulty difficulty, int stage)
-    {
-        if (!DifficultyNames.TryGetValue(difficulty, out var name)) return null;
-        if (stage < 1 || stage > StageCounts[difficulty]) return null;
-        return name + " - Stage " + stage + " Cleared";
-    }
-
     /// The single check a potion screen pays out, however the player picks. This is
     /// the shape with Potion Slot Locations off.
     public static string Potion(Difficulty difficulty, int stage)
@@ -82,12 +75,31 @@ public static class Locations
         return name + " - Stage " + stage;
     }
 
+    /// Difficulties whose boss is split six ways. Only the last: transforming needs one
+    /// potion type levelled to three, and the shorter runs rarely offer enough of a kind to
+    /// get there. A contract with PER_FORM_BOSS in the apworld's constants.
+    private static readonly HashSet<Difficulty> PerFormBoss =
+        new HashSet<Difficulty> { Difficulty.Nightmare };
+
+    public static bool SplitsBossByForm(Difficulty difficulty) =>
+        PerFormBoss.Contains(difficulty);
+
+    /// The boss dead in any form, which is the shape on every difficulty but the last.
+    public static string BossAny(Difficulty difficulty) =>
+        DifficultyNames.TryGetValue(difficulty, out var name)
+            ? name + " - Boss Cleared"
+            : null;
+
     public static string Boss(Difficulty difficulty, BodyState form)
     {
         if (!DifficultyNames.TryGetValue(difficulty, out var name)) return null;
         if (!FormNames.TryGetValue(form, out var formName)) return null;
         return name + " - Boss Cleared as " + formName;
     }
+
+    /// Whichever shape this difficulty uses, for the form the witch finished in.
+    public static string BossFor(Difficulty difficulty, BodyState form) =>
+        SplitsBossByForm(difficulty) ? Boss(difficulty, form) : BossAny(difficulty);
 
     /// Everything whose contents are shown to the player before they claim it, for the
     /// connect-time scout: the potion screens and the shop's shelves.
@@ -119,15 +131,41 @@ public static class Locations
         {
             for (var stage = 1; stage <= StageCounts[difficulty]; stage++)
             {
-                yield return Stage(difficulty, stage);
                 yield return Potion(difficulty, stage);
                 for (var slot = 1; slot <= PotionSlots; slot++)
                     yield return Potion(difficulty, stage, slot);
             }
+            // Both shapes, for every difficulty: the apworld registers both so the choice
+            // can change without renumbering, and this is what checks that it matches.
+            yield return BossAny(difficulty);
             foreach (var location in AllBossForms(difficulty)) yield return location;
         }
 
         for (var slot = 1; slot <= shopSlotMax; slot++) yield return ShopSlot(slot);
+    }
+
+    /// Every location a difficulty holds: its potion screens and its
+    /// six boss forms. Shop shelves are deliberately absent — they belong to no
+    /// difficulty, and counting them under each would make every count move together.
+    public static IEnumerable<string> AllForDifficulty(Difficulty difficulty, bool potionSlots)
+    {
+        if (!StageCounts.TryGetValue(difficulty, out var stages)) yield break;
+
+        for (var stage = 1; stage <= stages; stage++)
+        {
+            if (!potionSlots)
+            {
+                yield return Potion(difficulty, stage);
+                continue;
+            }
+            for (var slot = 1; slot <= PotionSlots; slot++)
+                yield return Potion(difficulty, stage, slot);
+        }
+
+        if (SplitsBossByForm(difficulty))
+            foreach (var location in AllBossForms(difficulty)) yield return location;
+        else
+            yield return BossAny(difficulty);
     }
 
     /// Every boss-form location of a difficulty, which is what the goal asks for.

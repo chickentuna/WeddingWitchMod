@@ -56,7 +56,7 @@ public class Plugin : BaseUnityPlugin
         Logger.LogInfo($"Unity {Application.unityVersion}, game {Application.productName} {Application.version}");
 
         Client = new ArchipelagoClient();
-        gameObject.AddComponent<ConnectionUI>();
+        gameObject.AddComponent<ConnectionPanel>();
         gameObject.AddComponent<DebugCheats>();
 
         var harmony = new Harmony(GUID);
@@ -75,6 +75,7 @@ public class Plugin : BaseUnityPlugin
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        MenuSplit.Forget();
         if (scene.name == "Main") MenuSplit.Install(this);
     }
 
@@ -94,6 +95,11 @@ public class Plugin : BaseUnityPlugin
     /// redrawing the shop has to happen here instead.
     private void Update()
     {
+        if (ApState.TakePendingCoins(out var coins))
+        {
+            Coin.UpdateCoin(coins);
+            Logger.LogInfo($"[ap] paid in {coins} Love Coins");
+        }
         if (ApState.TakeReloadRequest()) SaveDataPatch.ReloadGameData();
     }
 

@@ -154,7 +154,8 @@ public class ArchipelagoClient
                 {
                     if (!idToName.TryGetValue(pair.Key, out var location)) continue;
                     var info = pair.Value;
-                    ScoutCache.Add(location, info.ItemDisplayName, info.Player?.Alias, info.Flags);
+                    ScoutCache.Add(location, info.ItemDisplayName, info.Player?.Alias,
+                                   info.Flags, info.IsReceiverRelatedToActivePlayer);
                 }
 
                 Plugin.Logger.LogInfo($"Scouted {ScoutCache.Count} revealed locations");

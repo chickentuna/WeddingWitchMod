@@ -21,6 +21,7 @@
     <ItemGroup>
         <EmbeddedResource Include="res\ap-icon.png" />
         <EmbeddedResource Include="res\ap-icon-white.png" />
+        <EmbeddedResource Include="res\inventory.png" />
     </ItemGroup>
 
     <!-- Referenced straight from the game and a BepInEx install rather than NuGet.

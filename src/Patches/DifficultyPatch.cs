@@ -19,7 +19,11 @@ public static class DifficultyPatch
 {
     [HarmonyPatch(typeof(SelectDifficultyCanvas), "OnEnable")]
     [HarmonyPostfix]
-    public static void OnScreenShown() => Apply();
+    public static void OnScreenShown(SelectDifficultyCanvas __instance)
+    {
+        Apply();
+        DifficultyProgress.Refresh(__instance);
+    }
 
     /// A difficulty arriving while the screen is open has to unlock it there and then.
     public static void Apply()

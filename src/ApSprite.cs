@@ -5,23 +5,25 @@ using UnityEngine;
 
 namespace WeddingWitchArchipelago;
 
-/// The Archipelago logo, in the two shades the mod uses: colour on a shop shelf and on
-/// a potion banner, white for the menu button where a coloured logo would clash with
-/// the game's flat menu art.
+/// The mod's own art: the Archipelago logo in colour for a shop shelf and a potion
+/// banner, in white for the Shop menu button, and an inventory icon for the Upgrades
+/// button — which lists what you hold rather than what is for sale.
 ///
 /// Embedded in the assembly rather than loaded from disk so the plugin stays a single
-/// file to install. Currently the Fakutori placeholders — swap res/ap-icon.png and
-/// res/ap-icon-white.png for ones drawn in Wedding Witch's own style and rebuild.
+/// file to install. Replace the files in res/ and rebuild.
 public static class ApSprite
 {
     private const string Colour = "WeddingWitchArchipelago.res.ap-icon.png";
     private const string White = "WeddingWitchArchipelago.res.ap-icon-white.png";
+    private const string Inventory = "WeddingWitchArchipelago.res.inventory.png";
 
     private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>();
 
     public static Sprite Get() => Load(Colour);
 
     public static Sprite GetWhite() => Load(White);
+
+    public static Sprite GetInventory() => Load(Inventory);
 
     private static Sprite Load(string resource)
     {

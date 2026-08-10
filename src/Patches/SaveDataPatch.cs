@@ -39,6 +39,7 @@ public static class SaveDataPatch
         GameDataManager.ReloadAll();
         ShopPatch.RefreshOpenShop();
         DifficultyPatch.Apply();
+        MenuSplit.InstallNow();
     }
 
     // ---- ES3 ------------------------------------------------------------
