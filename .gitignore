@@ -1,3 +1,4 @@
+DECOMP_INFO.md
 # Decompiler / IL2CPP dump output (regenerate with tools/decompile.sh)
 .decomp/
 
@@ -6,9 +7,9 @@
 __pycache__/
 *.pyc
 
-# Extracted assets (regenerate with tools/extract_*.py)
-ref/images/
-ref/audio/
+# Extracted assets. The whole tree is untracked, text included: it is the game's own
+# content, and this repo is public. Regenerate it with tools/extract_*.py.
+ref/
 
 # C# build output
 bin/
@@ -17,6 +18,3 @@ obj/
 [Oo]bj/
 lib/
 *.csproj.user
-
-# Extracted game art, kept for reference while picking icons
-ref/icon-candidates/
