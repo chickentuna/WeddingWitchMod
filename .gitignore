@@ -15,3 +15,5 @@ bin/
 obj/
 [Bb]in/
 [Oo]bj/
+lib/
+*.csproj.user

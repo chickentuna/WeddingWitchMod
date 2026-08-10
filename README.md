@@ -2,47 +2,42 @@
 
 Reverse-engineering / modding workspace for the Unity game **Wedding Witch**.
 
-Unlike a Mono Unity game (e.g. Fakutori), Wedding Witch is an **IL2CPP** build: the C# was
-compiled to native code (`GameAssembly.so` + `il2cpp_data/Metadata/global-metadata.dat`,
-metadata **v31**). There is no `Assembly-CSharp.dll` to decompile, so the code view is a
-**structural dump** (signatures + native offsets, no method bodies) rather than real source.
+Wedding Witch is a Unity **Mono** build (6000.3.19f1): the game code ships as
+`Wedding Witch_Data/Managed/Assembly-CSharp.dll` and decompiles to real method bodies.
 
 Game install (Steam):
 `/home/jpn/.steam/debian-installation/steamapps/common/Wedding Witch`
 
-## Code: IL2CPP dump (`.decomp/`, gitignored)
-
-Produced with **Il2CppDumper v6.7.46** (net7 build, run on the net8 runtime):
+## Code: decompile (`.decomp/`, gitignored)
 
 ```sh
-cd /tmp/il2cppdumper   # download: github.com/Perfare/Il2CppDumper releases
-echo "" | DOTNET_ROLL_FORWARD=LatestMajor dotnet Il2CppDumper.dll \
-  "$GAME/GameAssembly.so" \
-  "$GAME/Wedding Witch_Data/il2cpp_data/Metadata/global-metadata.dat" \
-  "$PWD_OF_THIS_REPO/.decomp"
+DOTNET_ROLL_FORWARD=LatestMajor ilspycmd -p -o .decomp/mono \
+  "$GAME/Wedding Witch_Data/Managed/Assembly-CSharp.dll"
+DOTNET_ROLL_FORWARD=LatestMajor ilspycmd -o .decomp/firstpass \
+  "$GAME/Wedding Witch_Data/Managed/Assembly-CSharp-firstpass.dll"   # ES3 (Easy Save 3)
 ```
 
-(It exits 134 *after* finishing — a harmless `Console.ReadKey` on redirected stdin.)
+`.decomp/mono/` is 395 files, one per type. Key classes: `GameManager`, `GameDataManager`,
+`MissionManager`, `RoadMapCanvas`, `PotionManager`, `BattleUIManager`, `EnchantManager`,
+`GlobalStat`, `UpgradeWitchCanvas`/`UpgradeItem`/`UpgradeData`, and the
+`EnemyController`/`BossController`/`LastBoss_*` hierarchy. Persistence is **ES3** into
+`GameData.es3`, `AchivementState.es3` and `Config.es3`.
 
-Outputs in `.decomp/`:
-- **`dump.cs`** — 30 MB / ~864k lines, **13,651 types across 314 namespaces**. Every class /
-  method / field / enum / property with signatures, field byte-offsets (`// 0x20`), attributes,
-  and per-method native `RVA/Offset/VA`. **Method bodies are empty** — that's the IL2CPP ceiling.
-  `grep` this file the way you'd grep Fakutori's decompile.
-- `DummyDll/` — ~70 reconstructed assemblies (`Assembly-CSharp.dll`, etc.) to compile a mod against.
-- `il2cpp.h`, `script.json` — for loading native offsets into Ghidra/IDA (helper scripts ship with
-  Il2CppDumper) if you ever need actual method *logic*. Cpp2IL is the alternative for that.
-- `decompiled/` — bonus ILSpy decompile of the DummyDll stubs (game-only, ~40k lines, signatures).
+ScriptableObject *contents* are not in the assembly. They come out of the asset bundles with
+UnityPy, which needs a `TypeTreeGenerator` fed from the `Managed` folder because the build ships
+no type trees for its own MonoBehaviours:
 
-Key game classes: `GameManager`, `GameDataManager`, `WaveManager`, `MissionManager`,
-`PotionManager`, `BattleUIManager`, `InventoryItem`, `WitchInput`, and the
-`EnemyController`/`BossController`/`LastBoss_*` hierarchy.
+```py
+from UnityPy.helpers.TypeTreeGenerator import TypeTreeGenerator
+gen = TypeTreeGenerator("6000.3.19f1")
+gen.load_local_dll_folder(GAME + "/Wedding Witch_Data/Managed")
+env = UnityPy.load(GAME + "/Wedding Witch_Data/data.unity3d")
+env.typetree_generator = gen
+```
 
-### Modding note
-IL2CPP modding is **not** the Mono+Harmony setup Fakutori uses. Use **BepInEx 6 (IL2CPP)** with
-**Il2CppInterop**: running the game once with BepInEx 6 generates interop assemblies with full type
-info; you write plugins against those (Harmony works via the IL2CPP shim). The `DummyDll/` here is
-useful for exploring the API ahead of that.
+## Archipelago mod (`src/`)
+
+BepInEx 6 **Unity.Mono** plugin. See [docs/archipelago.md](docs/archipelago.md).
 
 ## Assets: `ref/` (media gitignored, text tracked)
 
@@ -66,12 +61,12 @@ as Addressable bundles, **13 locales** (en, ja, ko, zh-Hans, zh-TW, fr, de, es, 
 tr). Dialogue is rendered by a bespoke `Dialog`/`DialogManager`/`DialogParser`/`SpineDialogController`
 set (Spine portraits + TextMesh Pro + Febucci TextAnimator), but the **strings live in the String
 Tables** — mainly `Dialog_<locale>`, `StartAdventure_<locale>`, `LastBattle_<locale>`,
-`Victory_<locale>`. Because it's IL2CPP (no MonoBehaviour type tree), tables are read via raw
+`Victory_<locale>`. The build ships no MonoBehaviour type trees, so tables are read via raw
 length-prefixed-UTF-8 byte scanning. See `ref/text/_README.txt`.
 
 ## Layout
 ```
-.decomp/   IL2CPP dump + DummyDll + decompiled stubs   (gitignored — regenerate as above)
+.decomp/   ILSpy decompile of the game assemblies       (gitignored — regenerate as above)
 .venv/     Python venv with UnityPy 1.25.0             (gitignored)
 tools/     extract_images.py / extract_audio.py / extract_text.py
 ref/text/  TextAssets + localization tables            (tracked)

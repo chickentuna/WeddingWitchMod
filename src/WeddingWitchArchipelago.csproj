@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>WeddingWitchArchipelago</AssemblyName>
+        <Description>Archipelago multiworld randomizer for Wedding Witch</Description>
+        <Version>0.1.0</Version>
+        <LangVersion>latest</LangVersion>
+
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <RootNamespace>WeddingWitchArchipelago</RootNamespace>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AssemblySearchPaths>$(AssemblySearchPaths);{RawFileName}</AssemblySearchPaths>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="res\ap-icon.png" />
+    </ItemGroup>
+
+    <!-- Referenced straight from the game and a BepInEx install rather than NuGet.
+         Wedding Witch is a Unity Mono build, so this is BepInEx 6 Unity.Mono and the
+         game's own Assembly-CSharp; Private=false keeps them out of the output,
+         since BepInEx and the game supply them at runtime.
+         ES3, which the mod intercepts to drive upgrade levels, lives in
+         Assembly-CSharp-firstpass. -->
+    <ItemGroup>
+        <Reference Include="BepInEx.Core"><HintPath>lib\BepInEx.Core.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="BepInEx.Unity.Mono"><HintPath>lib\BepInEx.Unity.Mono.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="BepInEx.Unity.Common"><HintPath>lib\BepInEx.Unity.Common.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="0Harmony"><HintPath>lib\0Harmony.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="Assembly-CSharp"><HintPath>lib\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="Assembly-CSharp-firstpass"><HintPath>lib\Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine"><HintPath>lib\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.CoreModule"><HintPath>lib\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.IMGUIModule"><HintPath>lib\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.ImageConversionModule"><HintPath>lib\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.InputLegacyModule"><HintPath>lib\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.UI"><HintPath>lib\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.UIModule"><HintPath>lib\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.TextRenderingModule"><HintPath>lib\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+        <Reference Include="Unity.TextMeshPro"><HintPath>lib\Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    </ItemGroup>
+
+    <!-- GameDir is set in WeddingWitchArchipelago.csproj.user so the path stays
+         machine-local. -->
+    <Target Name="Deploy" AfterTargets="Build" Condition="'$(GameDir)' != ''">
+        <ItemGroup>
+            <DeployFiles Include="$(TargetDir)*.dll" />
+        </ItemGroup>
+        <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(GameDir)\BepInEx\plugins\$(AssemblyName)" />
+        <Message Importance="high" Text="Deployed $(AssemblyName).dll -> $(GameDir)" />
+    </Target>
+
+</Project>
