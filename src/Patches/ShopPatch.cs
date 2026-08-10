@@ -126,23 +126,18 @@ public static class ShopPatch
         }
 
         Adopt(rows);
-        var ordered = Reorder();
-
-        // OnEnable selects firstSelect and Update lerps the scroll view toward whatever
-        // is selected. That field is a scene-assigned upgrade row, which now sits below
-        // every shelf — so the panel opened scrolled into the middle of the list.
-        if (ordered.Count > 0) __instance.firstSelect = SelectableOf(ordered[0]);
+        Reorder();
     }
 
-    private static GameObject SelectableOf(UpgradeItem row)
-    {
-        var selectable = row.GetComponentInChildren<Selectable>(includeInactive: true);
-        return selectable != null ? selectable.gameObject : row.gameObject;
-    }
+    /// After the shelves exist and after the vanilla OnEnable has made its own
+    /// selection, so the menu's filter has the last word on what is showing.
+    [HarmonyPatch(typeof(UpgradeWitchCanvas), "OnEnable")]
+    [HarmonyPostfix]
+    public static void ApplyMenuFilter() => MenuSplit.Apply();
 
     private const string ShelfName = "ApShelf";
 
-    private static bool IsShelf(UpgradeItem row) => row.name.StartsWith(ShelfName);
+    public static bool IsShelf(UpgradeItem row) => row.name.StartsWith(ShelfName);
 
     /// Shelves built on an earlier opening of the panel are still in the hierarchy but
     /// no longer in the table, since it is cleared each time the shop opens.
@@ -200,7 +195,28 @@ public static class ShopPatch
         // An upgrade row is a read-out, not an offer. Leaving a price on it only
         // invites a click that does nothing. The level beside it is the part worth
         // keeping.
-        if (row.cost != null) row.cost.text = "";
+        if (row.cost == null) return;
+        row.cost.text = "";
+        SetCoinVisible(row, false);
+    }
+
+    /// The coin beside the price, which a blanked price leaves stranded.
+    ///
+    /// It is not a field on UpgradeItem, and picking it by position does not work: it
+    /// shares the row as a parent with the row's own frame, an Image carrying the Slot
+    /// sprite. Hiding by parent takes the frame with it. So it is picked by its sprite.
+    ///
+    /// Set rather than only cleared, because a shelf is cloned from an upgrade row and
+    /// would otherwise inherit a coin that had already been hidden.
+    private static void SetCoinVisible(UpgradeItem row, bool visible)
+    {
+        foreach (Transform child in row.transform)
+        {
+            var image = child.GetComponent<Image>();
+            if (image == null || image.sprite == null || image.sprite.name != "Coin") continue;
+            image.enabled = visible;
+            return;
+        }
     }
 
     /// The level pips belong to an upgrade's 0..max ladder, which a shelf has no
@@ -242,6 +258,7 @@ public static class ShopPatch
             row.description.text = known ? entry.Receiver + " · " + entry.Kind : location;
         if (row.cost != null)
             row.cost.text = sold ? "SOLD" : PriceOf(slot).ToString();
+        SetCoinVisible(row, !sold);
         if (row.curruntLevel != null)
             row.curruntLevel.text = "";
         if (row.maxLevel != null)
@@ -257,7 +274,7 @@ public static class ShopPatch
         var shop = UpgradeWitchCanvas.instance;
         if (shop == null) return;
 
-        foreach (var row in shop.upgradeItems)
+        foreach (var row in shop.GetComponentsInChildren<UpgradeItem>(includeInactive: true))
         {
             if (row == null || row.researchData == null) continue;
 

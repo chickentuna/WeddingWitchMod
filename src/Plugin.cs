@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using BepInEx.Unity.Mono;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using WeddingWitchArchipelago.Archipelago;
 
 namespace WeddingWitchArchipelago;
@@ -65,7 +66,16 @@ public class Plugin : BaseUnityPlugin
         SaveDataPatch.Apply(harmony);
         Logger.LogInfo($"Harmony applied {harmony.GetPatchedMethods().Count()} patches");
 
+        // The menu's Upgrades button is wired in the scene, so it can only be found
+        // once the scene holding it is loaded.
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         if (ConnectOnStart.Value) Connect();
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "Main") MenuSplit.Install(this);
     }
 
     public static void Connect()
