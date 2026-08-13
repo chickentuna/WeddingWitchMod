@@ -140,13 +140,13 @@ FILLER_GIFTS = (
     "Ankle Strap Heels",
     "Bandeau Top",
     "Halter Bra",
-    "Blindfold"
+    "Blindfold",
     "Lace Chemisette",
     "Silk Tap Pants",
     "Torsolette",
     "Heeled Boots",
     "Longline Bra",
-    "Nipple Rings"
+    "Crystal Earrings",
 )
 
 FILLER_ITEMS = tuple(FILLER_PREFIX + gift for gift in FILLER_GIFTS)
