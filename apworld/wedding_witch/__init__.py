@@ -13,7 +13,7 @@ from Options import OptionError
 from worlds.AutoWorld import WebWorld, World
 
 from .constants import (DIFFICULTY_REQUIREMENT, FILLER_ITEMS, GAME_NAME,
-                        GOAL_DIFFICULTY, PROGRESSIVE_DIFFICULTY,
+                        GOAL_DIFFICULTY, GOLD_ITEM, PROGRESSIVE_DIFFICULTY,
                         UPGRADE_ITEM_GROUP)
 from .items import (ITEM_NAME_GROUPS, ITEM_NAME_TO_ID, classification,
                     item_pool_names)
@@ -168,9 +168,17 @@ class WeddingWitchWorld(World):
 
     def get_filler_item_name(self) -> str:
         """Dealt in order rather than drawn one at a time, so a seed with room for a
-        dozen gifts shows a dozen different ones."""
+        dozen gifts shows a dozen different ones.
+
+        Every gift is distinct, so once the list is spent there is nothing left to hand
+        out that hasn't been handed out already. A seed that big pays the remainder in
+        Love Coins instead of dealing the same lingerie round again — the shop is what
+        wants coins, and a large shop is exactly what runs the gifts out.
+        """
         self._ensure_gifts()
-        name = FILLER_ITEMS[self.gift_order[self.gifts_dealt % len(self.gift_order)]]
+        if self.gifts_dealt >= len(self.gift_order):
+            return GOLD_ITEM
+        name = FILLER_ITEMS[self.gift_order[self.gifts_dealt]]
         self.gifts_dealt += 1
         return name
 
