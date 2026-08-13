@@ -32,6 +32,19 @@ public static class ShopPatch
     /// exist either, so raising the option only ever appends dearer stock.
     private const int PriceStep = 140;
 
+    /// Where the price stops climbing, in shelves. Past this a shelf costs the same as
+    /// the last one before it, so the dearest shelf any seed can stock is what the
+    /// default twenty already reached — PriceStep * 20, or 2,800.
+    ///
+    /// A run earns Love Coins at a rate the shelf count does not change, so without a
+    /// ceiling the sixtieth shelf wanted 8,400 of them: grindable in principle, but the
+    /// grind is the same stage cleared again for a check that is only worth what any
+    /// other shelf is worth. Flattening the tail keeps a big shop more stock rather than
+    /// slower stock.
+    ///
+    /// THIS IS A CONTRACT WITH THE APWORLD — options.ShopLocations.default must agree.
+    private const int PriceCapSlot = 20;
+
     /// The logo at its own pixel size dwarfs an upgrade's icon.
     private const float IconScale = 0.5f;
 
@@ -40,7 +53,7 @@ public static class ShopPatch
     private static readonly Dictionary<UpgradeItem, int> Shelves =
         new Dictionary<UpgradeItem, int>();
 
-    public static int PriceOf(int slot) => PriceStep * slot;
+    public static int PriceOf(int slot) => PriceStep * Mathf.Min(slot, PriceCapSlot);
 
     // ---- purchases ------------------------------------------------------
 
