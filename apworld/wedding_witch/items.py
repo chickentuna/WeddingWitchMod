@@ -1,7 +1,4 @@
-"""Item table. Every shop upgrade is an Archipelago item because the mod disables
-the shop outright, so a level the multiworld hasn't handed you is a level you do
-not have. The difficulty ladder is an item for the same reason.
-"""
+"""Item table: every shop upgrade level, and the difficulty ladder."""
 from typing import Dict, List
 
 from BaseClasses import ItemClassification
@@ -14,8 +11,7 @@ PROGRESSIVE_DIFFICULTY_ID = ITEM_BASE_ID + 800
 GOLD_ITEM_ID = ITEM_BASE_ID + 850
 FILLER_ID_BASE = ITEM_BASE_ID + 900
 
-# An upgrade item is named after the thing itself. A copy raises its level, and it has
-# as many levels as the shop used to sell.
+# One item per upgrade; a copy raises its level.
 UPGRADE_ITEMS: Dict[str, int] = {
     display: ITEM_BASE_ID + index
     for index, (_, display, _) in enumerate(UPGRADES)
@@ -44,8 +40,7 @@ ITEM_COUNTS[PROGRESSIVE_DIFFICULTY] = PROGRESSIVE_DIFFICULTY_COUNT
 
 
 def classification(name: str) -> ItemClassification:
-    """Upgrades gate the harder difficulties alongside the difficulty items, so
-    `state.has_group` has to count them — and that only counts progression items."""
+    """Upgrades are progression: the difficulty gates count them by group."""
     if name in FILLER_ITEM_IDS or name == GOLD_ITEM:
         return ItemClassification.filler
     return ItemClassification.progression

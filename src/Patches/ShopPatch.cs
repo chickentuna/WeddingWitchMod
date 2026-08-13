@@ -7,42 +7,22 @@ using WeddingWitchArchipelago.Archipelago;
 
 namespace WeddingWitchArchipelago;
 
-/// Turns the witch's upgrade shop into a stall selling Archipelago checks.
+/// Replaces the upgrade shop's stock with Archipelago locations.
 ///
-/// Two things happen to it. The 17 upgrade rows stop being buyable — every level comes
-/// from the multiworld now, and a level bought with Love Coins is a level the seed did
-/// not place — but they stay on the shelf as a read-only account of what has arrived,
-/// since nothing else in the game shows your permanent upgrades. Below them go the AP
-/// shelves, which is what Love Coins are for once the upgrades are gone.
+/// The 17 upgrade rows become read-only, displaying the levels received from the
+/// multiworld. The AP shelves are added below them and are the only buyable rows.
 ///
-/// Blocking purchases is unconditional, session or not. The AP shelves only exist
+/// Purchases are blocked whether or not a session is connected; the shelves exist only
 /// while connected.
 [HarmonyPatch]
 public static class ShopPatch
 {
-    /// Shelf n costs n times this. The curve is the mod's own — the apworld only decides
-    /// how many shelves there are.
-    ///
-    /// Linear, not exponential. 140 puts the default twenty shelves at 29,400 coins,
-    /// about three quarters of the 39,902 the vanilla shop charged to max every upgrade —
-    /// the same order of sink without asking for all of it, since the shelves are not the
-    /// only thing a run is for. It also behaves when the count changes: compounding made
-    /// the dearest shelf 2,135 at twenty and 571,826 at sixty, which is unbuyable, where
-    /// this reaches 8,400. A shelf's price no longer depends on how many other shelves
-    /// exist either, so raising the option only ever appends dearer stock.
+    /// Shelf n costs n times this, up to <see cref="PriceCapSlot"/>. The apworld decides
+    /// only how many shelves there are.
     private const int PriceStep = 140;
 
-    /// Where the price stops climbing, in shelves. Past this a shelf costs the same as
-    /// the last one before it, so the dearest shelf any seed can stock is what the
-    /// default twenty already reached — PriceStep * 20, or 2,800.
-    ///
-    /// A run earns Love Coins at a rate the shelf count does not change, so without a
-    /// ceiling the sixtieth shelf wanted 8,400 of them: grindable in principle, but the
-    /// grind is the same stage cleared again for a check that is only worth what any
-    /// other shelf is worth. Flattening the tail keeps a big shop more stock rather than
-    /// slower stock.
-    ///
-    /// THIS IS A CONTRACT WITH THE APWORLD — options.ShopLocations.default must agree.
+    /// Slot at which shelf prices stop increasing. Every shelf past it costs
+    /// PriceStep * PriceCapSlot.
     private const int PriceCapSlot = 20;
 
     /// The logo at its own pixel size dwarfs an upgrade's icon.

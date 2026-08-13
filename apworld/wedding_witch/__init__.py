@@ -1,9 +1,8 @@
 """Archipelago world for Wedding Witch.
 
-The mod stops the meta-upgrade shop selling upgrades, so every one of its 73 purchasable
-levels is an Archipelago item, and restocks its shelves with checks. Checks come from
-the potions offered after a stage, from clearing a difficulty's boss in each of the six
-witch forms, and from those shelves.
+The mod disables the meta-upgrade shop, making each of its 73 levels an item, and stocks
+its shelves with locations instead. Locations come from those shelves, from the potions
+offered after a stage, and from boss clears.
 """
 import logging
 from typing import Any, Dict, List
@@ -57,19 +56,13 @@ class WeddingWitchWorld(World):
     item_name_groups = ITEM_NAME_GROUPS
     location_name_groups = LOCATION_NAME_GROUPS
 
-    #: Lets Universal Tracker rebuild a seed without the yaml it was rolled from. UT
-    #: generates against an empty yaml in that case, so every option starts at its
-    #: default and the seed's real values have to come off the slot data — which is what
-    #: _adopt_seed_options is for. Setting this without that would track the wrong world.
+    #: Universal Tracker rebuilds a seed without its yaml; _adopt_seed_options supplies
+    #: the options the yaml would have.
     ut_can_gen_without_yaml = True
 
     @staticmethod
     def interpret_slot_data(slot_data: Dict[str, Any]) -> Dict[str, Any]:
-        """What opts this world into Universal Tracker's re-generation.
-
-        Returning the slot data is the signal to re-run generation and hand it back on
-        multiworld.re_gen_passthrough, which _adopt_seed_options reads.
-        """
+        """Hands the seed's options back on re_gen_passthrough for _adopt_seed_options."""
         return slot_data
 
     def generate_early(self) -> None:
@@ -79,8 +72,7 @@ class WeddingWitchWorld(World):
             potion_slots=bool(self.options.potion_slot_locations),
             shop_slots=self.options.shop_locations.value)
 
-        # Nightmare sitting below Hard would make the harder difficulty the looser
-        # gate, which is never what someone setting these meant.
+        # Nightmare must not be the looser of the two gates.
         if self.options.nightmare_upgrades_required < self.options.hard_upgrades_required:
             self.options.nightmare_upgrades_required.value = \
                 self.options.hard_upgrades_required.value
@@ -88,12 +80,8 @@ class WeddingWitchWorld(World):
         self._clamp_upgrade_requirements()
 
     def _clamp_upgrade_requirements(self) -> None:
-        """A requirement past what is collectable before its gate can never be met.
-
-        The options are ranged against the whole upgrade tree, but how much of it a
-        seed can hand you before Hard opens depends on how many locations sit in front
-        of Hard — so the real ceiling is the seed's, not the tree's. Each gate also has
-        to leave room for the Progressive Difficulty items that open it.
+        """Clamps each requirement to the upgrade items placeable before its gate, less
+        the Progressive Difficulty items the gate itself consumes.
         """
         before_hard = len(self.regions["Normal"]) + len(self.regions[SHOP_REGION])
         ceilings = {
@@ -116,11 +104,7 @@ class WeddingWitchWorld(World):
                                 self.player)
 
     def _passthrough(self) -> Dict[str, Any]:
-        """The live seed's slot data, when a tracker is re-generating it.
-
-        Empty during a real generation, which is what makes every caller here fall back
-        to rolling or to the yaml.
-        """
+        """The live seed's slot data when a tracker is re-generating it, empty otherwise."""
         passthrough = getattr(self.multiworld, "re_gen_passthrough", None)
         return (passthrough or {}).get(GAME_NAME) or {}
 
@@ -129,14 +113,8 @@ class WeddingWitchWorld(World):
                      "hard_upgrades_required", "nightmare_upgrades_required")
 
     def _adopt_seed_options(self) -> None:
-        """Take the world's shape from the seed being played, not from the yaml in front
-        of us.
-
-        Universal Tracker hands the slot data over but does not apply it to options, and
-        on the ut_can_gen_without_yaml path it generates against an empty yaml — so every
-        option arrives at its default. Shop Locations and Potion Slot Locations decide
-        which locations exist at all, so taking the defaults would have the tracker
-        listing locations the seed never had.
+        """Applies the option values from slot data, so a tracker builds the locations
+        the seed was rolled with rather than the defaults.
         """
         slot_data = self._passthrough()
         if not slot_data:
@@ -147,8 +125,8 @@ class WeddingWitchWorld(World):
                 getattr(self.options, name).value = int(slot_data[name])
 
     def _ensure_gifts(self) -> None:
-        """Item-link replacement asks a world for filler without running generate_early,
-        so the order has to be able to build itself on first use rather than assume it."""
+        """Builds the gift order on first use, since filler can be asked for before
+        generate_early runs."""
         if getattr(self, "gift_order", None):
             return
         self.gift_order = self._gift_order()
@@ -157,24 +135,14 @@ class WeddingWitchWorld(World):
     def _gift_order(self) -> List[int]:
         """The order gifts are dealt in.
 
-        Rolled freely: a tracker rebuilding this seed stops before items are placed, so
-        the pool it builds is never read and the order it lands on cannot be seen. What a
-        tracker does need is every gift name in item_name_to_id, so a received one
-        resolves to a name rather than a bare id.
+        Not in slot data, so self.random is enough to keep it deterministic.
         """
         order = list(range(len(FILLER_ITEMS)))
         self.random.shuffle(order)
         return order
 
     def get_filler_item_name(self) -> str:
-        """Dealt in order rather than drawn one at a time, so a seed with room for a
-        dozen gifts shows a dozen different ones.
-
-        Every gift is distinct, so once the list is spent there is nothing left to hand
-        out that hasn't been handed out already. A seed that big pays the remainder in
-        Love Coins instead of dealing the same lingerie round again — the shop is what
-        wants coins, and a large shop is exactly what runs the gifts out.
-        """
+        """A different gift each call, then coins once the list is spent."""
         self._ensure_gifts()
         if self.gifts_dealt >= len(self.gift_order):
             return GOLD_ITEM
@@ -192,8 +160,6 @@ class WeddingWitchWorld(World):
                 f"Wedding Witch has {len(pool)} items but only {total_locations} "
                 f"locations. Raise Shop Locations or turn on Potion Slot Locations.")
 
-        # Whatever is left over is a wedding gift, dealt in order so a seed with room for
-        # a dozen shows a dozen different ones.
         for _ in range(total_locations - len(pool)):
             pool.append(self.create_item(self.get_filler_item_name()))
 
@@ -232,10 +198,6 @@ class WeddingWitchWorld(World):
         )
 
     def set_rules(self) -> None:
-        # The mod is what actually finishes the slot — it sends the goal once enough of
-        # the goal difficulty's boss-form locations are checked. Nothing on this side
-        # can observe which form the witch is in, so generation only needs to know the
-        # point past which that run is a fair ask.
         self.multiworld.completion_condition[self.player] = \
             self._region_rule(GOAL_DIFFICULTY)
 

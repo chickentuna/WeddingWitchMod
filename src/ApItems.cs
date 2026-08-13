@@ -2,32 +2,28 @@ using System.Collections.Generic;
 
 namespace WeddingWitchArchipelago;
 
-/// Every Archipelago item name the mod answers to.
-///
-/// The upgrades come from <see cref="UpgradeCatalog"/>; the rest are here. All of it is
-/// a contract with worlds/wedding_witch/items.py — a name that drifts is an item the mod
-/// silently ignores.
+/// Every Archipelago item name the mod handles. Upgrade names come from
+/// <see cref="UpgradeCatalog"/>; the rest are here.
 public static class ApItems
 {
     /// One copy per difficulty past Normal. See DifficultyPatch.
     public const string ProgressiveDifficulty = "Progressive Difficulty";
 
-    /// Love Coins, which the hijacked shop spends. Deliberately outside the Gift prefix:
-    /// the mod ignores anything wearing that, and this has to be acted on.
-    public const string Gold = "+100 Gold";
-    public const int GoldPerItem = 100;
+    /// Grants Love Coins, kept outside <see cref="GiftPrefix"/> so it is acted on rather
+    /// than ignored. Worth one shelf at ShopPatch.PriceCapSlot. Matched by name, so the
+    /// apworld's GOLD_ITEM has to read the same.
+    public const string Gold = "+2800 Coins";
+    public const int GoldPerItem = 2800;
 
-    /// Filler is a wedding gift — the apworld names three dozen of them, all prefixed
-    /// like this. Matching the prefix rather than the list is deliberate: the mod does
-    /// nothing with a gift but recognise it, and carrying the names on both sides would
-    /// only be one more thing to drift.
+    /// Filler is a wedding gift. The mod only has to recognise one, so it matches the
+    /// prefix rather than carrying the names.
     public const string GiftPrefix = "Gift: ";
 
     public static bool IsFiller(string itemName) =>
         itemName != null && itemName.StartsWith(GiftPrefix);
 
-    /// Distinct names the mod knows by name, not pool copies — for cross-checking
-    /// against the apworld. Gifts are excluded, being matched by prefix instead.
+    /// Distinct names the mod knows, not pool copies. Gifts are excluded, being matched
+    /// by prefix instead.
     public static IEnumerable<string> AllNames()
     {
         yield return ProgressiveDifficulty;
