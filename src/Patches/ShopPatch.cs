@@ -17,12 +17,12 @@ namespace WeddingWitchArchipelago;
 [HarmonyPatch]
 public static class ShopPatch
 {
-    /// Shelf n costs n times this, up to <see cref="PriceCapSlot"/>. The apworld decides
-    /// only how many shelves there are.
-    private const int PriceStep = 140;
+    /// What the shelf at <see cref="PriceCapSlot"/> costs, and every shelf past it.
+    /// Shelves below it cost their share of it. The apworld decides only how many
+    /// shelves there are.
+    private const int PriceCap = 90;
 
-    /// Slot at which shelf prices stop increasing. Every shelf past it costs
-    /// PriceStep * PriceCapSlot.
+    /// Slot at which shelf prices stop increasing.
     private const int PriceCapSlot = 20;
 
     /// The logo at its own pixel size dwarfs an upgrade's icon.
@@ -33,7 +33,8 @@ public static class ShopPatch
     private static readonly Dictionary<UpgradeItem, int> Shelves =
         new Dictionary<UpgradeItem, int>();
 
-    public static int PriceOf(int slot) => PriceStep * Mathf.Min(slot, PriceCapSlot);
+    public static int PriceOf(int slot) =>
+        PriceCap * Mathf.Min(slot, PriceCapSlot) / PriceCapSlot;
 
     // ---- purchases ------------------------------------------------------
 

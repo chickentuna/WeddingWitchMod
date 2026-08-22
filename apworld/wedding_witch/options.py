@@ -19,7 +19,7 @@ class GoalForms(Range):
 class ShopLocations(Range):
     """How many locations the witch's shop stocks, in place of the upgrades.
 
-    Shelf *n* costs 140 Love Coins times *n*, up to 2,800 from the twentieth on."""
+    Shelf *n* costs 4.5 Love Coins times *n*, up to 90 from the twentieth on."""
     display_name = "Shop Locations"
     range_start = SHOP_LOCATION_MIN
     range_end = SHOP_LOCATION_MAX

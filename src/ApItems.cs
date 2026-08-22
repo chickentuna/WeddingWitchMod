@@ -10,10 +10,9 @@ public static class ApItems
     public const string ProgressiveDifficulty = "Progressive Difficulty";
 
     /// Grants Love Coins, kept outside <see cref="GiftPrefix"/> so it is acted on rather
-    /// than ignored. Worth one shelf at ShopPatch.PriceCapSlot. Matched by name, so the
-    /// apworld's GOLD_ITEM has to read the same.
-    public const string Gold = "+2800 Coins";
-    public const int GoldPerItem = 2800;
+    /// than ignored. Matched by name, so the apworld's GOLD_ITEM has to read the same.
+    public const string Gold = "+90 Coins";
+    public const int GoldPerItem = 90;
 
     /// Filler is a wedding gift. The mod only has to recognise one, so it matches the
     /// prefix rather than carrying the names.

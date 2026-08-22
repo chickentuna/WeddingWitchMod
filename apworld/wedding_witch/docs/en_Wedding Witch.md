@@ -31,8 +31,7 @@ Locations are:
   witch form; Normal and Hard just want it dead in any form, because their shorter runs
   rarely offer enough of one potion type to transform at all. 8 checks.
 - **Shop** — buying a shelf in the witch's shop. Shop Locations of them, 20 by
-  default. Shelf *n* costs 140 Love Coins times *n*, so twenty of them come to 29,400 —
-  about three quarters of what the unmodded shop charged to max every upgrade.
+  default.
 
 A default seed is 82 locations: 54 potions, 8 boss clears and 20 shelves.
 

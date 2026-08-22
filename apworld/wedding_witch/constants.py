@@ -124,6 +124,6 @@ FILLER_GIFTS = (
 FILLER_ITEMS = tuple(FILLER_PREFIX + gift for gift in FILLER_GIFTS)
 
 # Filler that grants Love Coins, kept outside FILLER_PREFIX so the mod acts on it rather
-# than ignoring it. Worth one shelf at ShopPatch.PriceCapSlot.
-GOLD_ITEM = "+2800 Coins"
-GOLD_PER_ITEM = 2800
+# than ignoring it.
+GOLD_ITEM = "+90 Coins"
+GOLD_PER_ITEM = 90
