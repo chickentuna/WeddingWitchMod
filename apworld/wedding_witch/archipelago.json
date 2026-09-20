@@ -4,5 +4,6 @@
     "minimum_ap_version": "0.6.4",
     "world_version": "0.1.0",
     "repo_url": "https://github.com/chickentuna/WeddingWitchMod",
-    "ai_disclosure": "copilot"
+    "ai_disclosure": "copilot",
+    "flags": []
 }
