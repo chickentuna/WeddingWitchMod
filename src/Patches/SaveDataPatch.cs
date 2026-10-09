@@ -5,8 +5,8 @@ using HarmonyLib;
 
 namespace WeddingWitchArchipelago;
 
-/// Routes GameData.es3 through the room's own store while a session is live — see
-/// ApProfile for why that file and not the others.
+/// Routes GameData.es3 and AchivementState.es3 through the room's own store while a
+/// session is live — see ApProfile for why those files and not the others.
 ///
 /// Everything that reads an upgrade level does it the same way: GlobalStat
 /// .ApplyUpgrade, PlayerMagnet, EnchantManager, RoadMapCanvas and UpgradeItem all
@@ -28,6 +28,11 @@ public static class SaveDataPatch
         harmony.Patch(LoadMethod(typeof(int)), prefix: Hook(nameof(LoadIntPrefix)));
         harmony.Patch(SaveMethod(typeof(int)), prefix: Hook(nameof(SaveIntPrefix)));
 
+        harmony.Patch(LoadMethod(typeof(AchivementState)),
+                      prefix: Hook(nameof(LoadAchievementPrefix)));
+        harmony.Patch(SaveMethod(typeof(AchivementState)),
+                      prefix: Hook(nameof(SaveAchievementPrefix)));
+
         harmony.Patch(AccessTools.Method(typeof(GameDataManager.GameData), "Load"),
                       prefix: Hook(nameof(GameDataLoadPrefix)));
     }
@@ -37,6 +42,7 @@ public static class SaveDataPatch
     public static void ReloadGameData()
     {
         GameDataManager.ReloadAll();
+        AchievementManager.instance?.ReloadStates();
         ShopPatch.RefreshOpenShop();
         DifficultyPatch.Apply();
         MenuSplit.InstallNow();
@@ -62,6 +68,25 @@ public static class SaveDataPatch
     }
 
     private static bool SaveIntPrefix(string key, int value, string filePath)
+    {
+        if (!Diverted(filePath)) return true;
+        ApProfile.Set(filePath, key, value.ToString());
+        return false;
+    }
+
+    private static bool LoadAchievementPrefix(string key, string filePath,
+                                              ref AchivementState __result)
+    {
+        if (!Diverted(filePath)) return true;
+        __result = ApProfile.TryGet(filePath, key, out var stored)
+                   && Enum.TryParse(stored, out AchivementState state)
+            ? state
+            : AchivementState.Incompleted;
+        return false;
+    }
+
+    private static bool SaveAchievementPrefix(string key, AchivementState value,
+                                              string filePath)
     {
         if (!Diverted(filePath)) return true;
         ApProfile.Set(filePath, key, value.ToString());

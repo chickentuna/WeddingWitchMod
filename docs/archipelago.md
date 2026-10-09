@@ -30,8 +30,8 @@ every consumer reads it the same way — `ES3.Load<int>(loadKey, "GameData.es3")
 
 So `SaveDataPatch` intercepts that one read rather than each consumer. It also diverts the whole of
 `GameData.es3` into a per-room store (`ApProfile`) while connected, which is what keeps the
-multiworld's levels out of the save played unconnected. `Config.es3` and `AchivementState.es3` are
-left alone.
+multiworld's levels out of the save played unconnected. `AchivementState.es3` is diverted the same
+way, since achievements pay out Love Coins; `Config.es3` is left alone.
 
 Levels deliberately take effect from the next run: `GlobalStat.ApplyUpgrade` accumulates into
 instance fields that only reset when the scene reloads, so calling it again mid-run applies

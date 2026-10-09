@@ -14,12 +14,16 @@ namespace WeddingWitchArchipelago;
 /// levels would show up in the room. Love Coins and the lifetime counters live in
 /// the same file and come along with it.
 ///
-/// Nothing else is diverted. Config.es3 — language, resolution, volume, key
-/// bindings — stays shared, since none of it is progress, and AchivementState.es3
-/// is left alone so Steam achievements still work the way they always did.
+/// AchivementState.es3 is diverted too: achievements pay out Love Coins, so a room
+/// needs its own claimed/unclaimed states, counted against its own lifetime counters.
+/// Steam is still told about every achievement the room completes.
+///
+/// Config.es3 — language, resolution, volume, key bindings — stays shared, since
+/// none of it is progress.
 public static class ApProfile
 {
     public const string GameDataFile = "GameData.es3";
+    public const string AchievementFile = "AchivementState.es3";
 
     /// The mod's own bookkeeping, kept in the same per-room store. Not a real ES3 file,
     /// so the interception in SaveDataPatch never sees it.
@@ -34,7 +38,7 @@ public static class ApProfile
     /// ordinary save exactly as the game left it.
     public static bool Active { get; private set; }
 
-    public static bool Owns(string file) => file == GameDataFile;
+    public static bool Owns(string file) => file == GameDataFile || file == AchievementFile;
 
     public static void Enter(string room, string slot)
     {
