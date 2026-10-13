@@ -154,7 +154,55 @@ public static class MenuSplit
         if (shopButton != null) shopButton.onClick.AddListener(() => Show(Panel.Shop));
         upgrades.onClick.AddListener(() => Show(Panel.Upgrades));
 
+        if (shopButton != null) Splice(upgrades, shopButton);
+
         Plugin.Logger.LogInfo($"[menu] added a Shop button beside {upgrades.name}");
+    }
+
+    /// Links the clone into pad and arrow-key navigation, right after Upgrades.
+    ///
+    /// The menu's buttons navigate explicitly, linked to one another in the scene, so the
+    /// clone arrives with Upgrades' links and nothing leads to it. It goes in along the
+    /// axis Upgrades leads on from, between Upgrades and its old next button.
+    private static void Splice(Selectable upgrades, Selectable shop)
+    {
+        var nav = upgrades.navigation;
+        Plugin.Logger.LogInfo($"[menu] {upgrades.name} navigation is {nav.mode}");
+        if (nav.mode != Navigation.Mode.Explicit) return;
+
+        var horizontal =
+            upgrades.transform.parent.GetComponent<HorizontalLayoutGroup>() != null
+            || (nav.selectOnDown == null && nav.selectOnRight != null);
+        var next = horizontal ? nav.selectOnRight : nav.selectOnDown;
+
+        Link(upgrades, horizontal, forward: shop);
+
+        var shopNav = nav;
+        if (horizontal) { shopNav.selectOnLeft = upgrades; shopNav.selectOnRight = next; }
+        else { shopNav.selectOnUp = upgrades; shopNav.selectOnDown = next; }
+        shop.navigation = shopNav;
+
+        if (next != null)
+        {
+            var nextNav = next.navigation;
+            var back = horizontal ? nextNav.selectOnLeft : nextNav.selectOnUp;
+            if (ReferenceEquals(back, upgrades)) Link(next, horizontal, backward: shop);
+        }
+    }
+
+    private static void Link(Selectable from, bool horizontal,
+                             Selectable forward = null, Selectable backward = null)
+    {
+        var nav = from.navigation;
+        if (forward != null)
+        {
+            if (horizontal) nav.selectOnRight = forward; else nav.selectOnDown = forward;
+        }
+        if (backward != null)
+        {
+            if (horizontal) nav.selectOnLeft = backward; else nav.selectOnUp = backward;
+        }
+        from.navigation = nav;
     }
 
     /// Sets the clone's label, permanently.

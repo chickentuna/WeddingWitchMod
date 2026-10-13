@@ -14,7 +14,7 @@ public class Plugin : BaseUnityPlugin
 {
     public const string GUID = "com.jpn.weddingwitch.archipelago";
     public const string NAME = "Wedding Witch Archipelago";
-    public const string VERSION = "0.1.0";
+    public const string VERSION = "0.1.1";
 
     public static Plugin Instance { get; private set; }
 
